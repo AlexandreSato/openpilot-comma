@@ -2,7 +2,7 @@
 from cereal import car
 from panda import Panda
 from openpilot.selfdrive.car import create_button_events, get_safety_config
-from openpilot.selfdrive.car.chrysler.values import CAR, RAM_HD, RAM_DT, RAM_CARS, ChryslerFlags
+from openpilot.selfdrive.car.chrysler.values import CAR, RAM_HD, RAM_DT, RAM_CARS, ChryslerFlags, JEEP_COMMANDER # TODO clean-after-port
 from openpilot.selfdrive.car.interfaces import CarInterfaceBase
 
 ButtonType = car.CarState.ButtonEvent.Type
@@ -64,7 +64,7 @@ class CarInterface(CarInterfaceBase):
       CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning, 1.0, False)
 
     elif candidate == CAR.JEEP_COMMANDER_2022:
-      # TODO tunning
+      # TODO tuning
       pass
 
     else:
@@ -95,6 +95,12 @@ class CarInterface(CarInterfaceBase):
       self.low_speed_alert = False
     if self.low_speed_alert:
       events.add(car.CarEvent.EventName.belowSteerSpeed)
+
+    # BEGIN TODO clean-after-port
+    if self.CP.carFingerprint in JEEP_COMMANDER:
+      if ret.brakePressed:
+        events.add(car.CarEvent.EventName.reverseGear)
+    #END TODO clean-after-port
 
     ret.events = events.to_msg()
 
