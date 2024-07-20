@@ -63,6 +63,10 @@ class CarInterface(CarInterfaceBase):
       ret.steerActuatorDelay = 0.2
       CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning, 1.0, False)
 
+    elif candidate == CAR.JEEP_COMMANDER_2022:
+      # TODO tunning
+      pass
+
     else:
       raise ValueError(f"Unsupported car: {candidate}")
 
