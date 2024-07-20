@@ -257,6 +257,26 @@ FW_VERSIONS = {
       b'68632416AB',
     ],
   },
+  CAR.JEEP_COMMANDER_2022: {
+    (Ecu.combinationMeter, 0x742, None): [
+      b'PLACEHOLDER',
+    ],
+    (Ecu.abs, 0x747, None): [
+      b'PLACEHOLDER',
+    ],
+    (Ecu.fwdRadar, 0x753, None): [
+      b'PLACEHOLDER',
+    ],
+    (Ecu.eps, 0x75a, None): [
+      b'PLACEHOLDER',
+    ],
+    (Ecu.engine, 0x7e0, None): [
+      b'PLACEHOLDER',
+    ],
+    (Ecu.transmission, 0x7e1, None): [
+      b'PLACEHOLDER',
+    ],
+  },
   CAR.JEEP_GRAND_CHEROKEE: {
     (Ecu.combinationMeter, 0x742, None): [
       b'68243549AG',

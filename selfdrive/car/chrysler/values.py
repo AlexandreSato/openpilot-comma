@@ -59,6 +59,11 @@ class CAR(Platforms):
   )
 
   # Jeep
+  JEEP_COMMANDER_2022 = ChryslerPlatformConfig( # braziliam
+    [ChryslerCarDocs("Jeep Commander 2022-25")],
+    ChryslerCarSpecs(mass=1685, wheelbase=2.79, steerRatio=16.2),
+  )
+
   JEEP_GRAND_CHEROKEE = ChryslerPlatformConfig(  # includes 2017 Trailhawk
     [ChryslerCarDocs("Jeep Grand Cherokee 2016-18", video_link="https://www.youtube.com/watch?v=eLR9o2JkuRk")],
     ChryslerCarSpecs(mass=1778., wheelbase=2.71, steerRatio=16.7),
@@ -105,6 +110,7 @@ class CarControllerParams:
 
 STEER_THRESHOLD = 120
 
+JEEP_COMMANDER = {CAR.JEEP_COMMANDER_2022,}
 RAM_DT = {CAR.RAM_1500_5TH_GEN, }
 RAM_HD = {CAR.RAM_HD_5TH_GEN, }
 RAM_CARS = RAM_DT | RAM_HD
