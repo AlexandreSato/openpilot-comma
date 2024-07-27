@@ -62,6 +62,7 @@ class CAR(Platforms):
   JEEP_COMMANDER_2022 = ChryslerPlatformConfig( # braziliam
     [ChryslerCarDocs("Jeep Commander 2022-25")],
     ChryslerCarSpecs(mass=1685, wheelbase=2.79, steerRatio=16.2),
+    dbc_dict('chrysler_jeep_commander_generated', None),
   )
 
   JEEP_GRAND_CHEROKEE = ChryslerPlatformConfig(  # includes 2017 Trailhawk
