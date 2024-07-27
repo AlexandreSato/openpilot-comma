@@ -38,7 +38,13 @@ class CarState(CarStateBase):
       ret.brakePressed = cp.vl["BRAKE_PRESSED_4"]["BRAKE_PRESSED_4"] == 1
       ret.gas = 0 # TODO
       ret.gasPressed = False # TODO
-      ret.wheelSpeeds = self.get_wheel_speeds(10,10,10,10,unit=1.0) # TODO
+      ret.wheelSpeeds = self.get_wheel_speeds( # TODO Adjust scale
+        cp.vl["WHEEL_SPEEDS"]["WHEEL_SPEED_FL"],
+        cp.vl["WHEEL_SPEEDS"]["WHEEL_SPEED_FR"],
+        cp.vl["WHEEL_SPEEDS"]["WHEEL_SPEED_RL"],
+        cp.vl["WHEEL_SPEEDS"]["WHEEL_SPEED_RR"],
+        unit=1.0
+      )
       ret.vEgoRaw = float(np.mean([ret.wheelSpeeds.fl, ret.wheelSpeeds.fr, ret.wheelSpeeds.rl, ret.wheelSpeeds.rr]))
       ret.vEgo, ret.aEgo = self.update_speed_kf(ret.vEgoRaw)
       ret.standstill = abs(ret.vEgoRaw) < 1e-3
@@ -158,6 +164,7 @@ class CarState(CarStateBase):
     elif CP.carFingerprint in JEEP_COMMANDER:
       messages += [
         ("BRAKE_PRESSED_4", 100),
+        ("WHEEL_SPEEDS", 100),
       ]
     else:
       messages += [
