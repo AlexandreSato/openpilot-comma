@@ -41,6 +41,7 @@ Thank you for your continuous love and support! Enjoy 🥰
 
 ![Paypall.png.png](Paypall.png)
 <br><br><br>
+</div>
 <div align="center" style="text-align: center;">
 
 <h1>openpilot</h1>
