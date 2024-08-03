@@ -54,6 +54,8 @@ class CarState(CarStateBase):
       ret.standstill = abs(ret.vEgoRaw) < 1e-3
       ret.steeringAngleDeg = cp.vl["EPS_1"]["STEERING_ANGLE"]
       ret.steeringRateDeg = cp.vl["EPS_1"]["STEERING_RATE"]
+      ret.steeringTorque = cp.vl["EPS_2"]["DRIVER_TORQUE"]
+      ret.steeringPressed = ret.steeringTorque > 80
     else:
       self.prev_distance_button = self.distance_button
       self.distance_button = cp.vl["CRUISE_BUTTONS"]["ACC_Distance_Dec"]
@@ -170,6 +172,7 @@ class CarState(CarStateBase):
         ("BRAKE_PRESSED_4", 100),
         ("ENGINE_1", 100),
         ("EPS_1", 100),
+        ("EPS_2", 100),
         ("WHEEL_SPEEDS", 100),
       ]
     else:
