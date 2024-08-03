@@ -39,7 +39,7 @@ class CarState(CarStateBase):
         ret.gearShifter = GearShifter.drive
       ret.brake = 0 # TODO
       ret.brakePressed = cp.vl["BRAKE_PRESSED_4"]["BRAKE_PRESSED_4"] == 1
-      ret.gas = 0 # TODO
+      ret.gas = cp.vl["ENGINE_1"]["ACCEL_PEDAL"]
       ret.gasPressed = False # TODO
       ret.wheelSpeeds = self.get_wheel_speeds( # TODO Adjust scale
         cp.vl["WHEEL_SPEEDS"]["WHEEL_SPEED_FL"],
