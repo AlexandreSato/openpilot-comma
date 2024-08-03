@@ -56,6 +56,8 @@ class CarState(CarStateBase):
       ret.steeringRateDeg = cp.vl["EPS_1"]["STEERING_RATE"]
       ret.steeringTorque = cp.vl["EPS_2"]["DRIVER_TORQUE"]
       ret.steeringPressed = ret.steeringTorque > 80
+      ret.yawRate = cp.vl["ABS_2"]["YAW_RATE"]
+      ret.steerFaultPermanent = bool(cp.vl["EPS_2"]["LKA_FAULT"])
     else:
       self.prev_distance_button = self.distance_button
       self.distance_button = cp.vl["CRUISE_BUTTONS"]["ACC_Distance_Dec"]
@@ -169,6 +171,7 @@ class CarState(CarStateBase):
       ]
     elif CP.carFingerprint in JEEP_COMMANDER:
       messages += [
+        ("ABS_2", 100),
         ("BRAKE_PRESSED_4", 100),
         ("ENGINE_1", 100),
         ("EPS_1", 100),
