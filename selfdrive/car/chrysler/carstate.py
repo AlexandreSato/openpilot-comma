@@ -169,6 +169,7 @@ class CarState(CarStateBase):
       messages += [
         ("BRAKE_PRESSED_4", 100),
         ("ENGINE_1", 100),
+        ("EPS_1", 100),
         ("WHEEL_SPEEDS", 100),
       ]
     else:
