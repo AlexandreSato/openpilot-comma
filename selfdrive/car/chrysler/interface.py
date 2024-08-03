@@ -97,6 +97,7 @@ class CarInterface(CarInterfaceBase):
       events.add(car.CarEvent.EventName.belowSteerSpeed)
 
     # BEGIN TODO clean-after-port
+    if self.CP.carFingerprint in JEEP_COMMANDER and False:
     if self.CP.carFingerprint in JEEP_COMMANDER:
       if ret.brakePressed:
         events.add(car.CarEvent.EventName.reverseGear)

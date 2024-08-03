@@ -33,7 +33,10 @@ class CarState(CarStateBase):
     ret = car.CarState.new_message()
 
     if self.CP.carFingerprint in JEEP_COMMANDER:
-      ret.gearShifter = GearShifter.drive # TODO and cleanup remove import
+      if bool(cp.vl["ENGINE_1"]["REVERSE"]):
+        ret.gearShifter = GearShifter.reverse # TODO and cleanup remove import
+      else:
+        ret.gearShifter = GearShifter.drive
       ret.brake = 0 # TODO
       ret.brakePressed = cp.vl["BRAKE_PRESSED_4"]["BRAKE_PRESSED_4"] == 1
       ret.gas = 0 # TODO
@@ -164,6 +167,7 @@ class CarState(CarStateBase):
     elif CP.carFingerprint in JEEP_COMMANDER:
       messages += [
         ("BRAKE_PRESSED_4", 100),
+        ("ENGINE_1", 100),
         ("WHEEL_SPEEDS", 100),
       ]
     else:
