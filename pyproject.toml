@@ -26,7 +26,7 @@ dependencies = [
   "pycapnp",
   "Cython",
   "setuptools",
-  "numpy < 2.0.0", # control does not support numpy 2
+  "numpy",
 
   # body / webrtcd
   "aiohttp",
@@ -61,16 +61,14 @@ dependencies = [
   "pycryptodome", # used in updated/casync, panda, body, and a test
 
   # logreader
-  "zstd",
+  "zstandard",
 ]
 
 [project.optional-dependencies]
 docs = [
   "Jinja2",
   "natsort",
-  "mkdocs==1.4.3",  # needed for mkdocs-plugin-commonmark
-  "mkdocs-terminal",
-  "mkdocs-plugin-commonmark",
+  "mkdocs",
 ]
 
 testing = [
@@ -96,7 +94,6 @@ dev = [
   "av",
   "azure-identity",
   "azure-storage-blob",
-  "control",
   "dictdiffer",
   "flaky",
   "inputs",
@@ -114,7 +111,6 @@ dev = [
   "tabulate",
   "types-requests",
   "types-tabulate",
-  "hexdump",
 
   # this is only pinned since 5.15.11 is broken
   "pyqt5 ==5.15.2; platform_machine == 'x86_64'", # no aarch64 wheels for macOS/linux
