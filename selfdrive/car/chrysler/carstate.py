@@ -38,9 +38,10 @@ class CarState(CarStateBase):
       else:
         ret.gearShifter = GearShifter.drive
       ret.brake = 0 # TODO
+      #ret.parkingBrake = TODO
       ret.brakePressed = cp.vl["BRAKE_PRESSED_4"]["BRAKE_PRESSED_4"] == 1
       ret.gas = cp.vl["ENGINE_1"]["ACCEL_PEDAL"]
-      ret.gasPressed = False # TODO
+      ret.gasPressed = ret.gas > 1e-3
       ret.wheelSpeeds = self.get_wheel_speeds( # TODO Adjust scale
         cp.vl["WHEEL_SPEEDS"]["WHEEL_SPEED_FL"],
         cp.vl["WHEEL_SPEEDS"]["WHEEL_SPEED_FR"],
@@ -51,8 +52,8 @@ class CarState(CarStateBase):
       ret.vEgoRaw = float(np.mean([ret.wheelSpeeds.fl, ret.wheelSpeeds.fr, ret.wheelSpeeds.rl, ret.wheelSpeeds.rr]))
       ret.vEgo, ret.aEgo = self.update_speed_kf(ret.vEgoRaw)
       ret.standstill = abs(ret.vEgoRaw) < 1e-3
-      ret.steeringAngleDeg = 0 # TODO
-      ret.steeringRateDeg = 0 # TODO
+      ret.steeringAngleDeg = cp.vl["EPS_1"]["STEERING_ANGLE"]
+      ret.steeringRateDeg = cp.vl["EPS_1"]["STEERING_RATE"]
     else:
       self.prev_distance_button = self.distance_button
       self.distance_button = cp.vl["CRUISE_BUTTONS"]["ACC_Distance_Dec"]
