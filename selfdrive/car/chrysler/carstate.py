@@ -37,7 +37,7 @@ class CarState(CarStateBase):
         ret.gearShifter = GearShifter.reverse # TODO and cleanup remove import
       else:
         ret.gearShifter = GearShifter.drive
-      ret.brake = 0 # TODO
+      ret.brake = cp.vl["ABS_6"]["BRAKE_PRESSURE_1"]
       #ret.parkingBrake = TODO
       ret.brakePressed = cp.vl["BRAKE_PRESSED_4"]["BRAKE_PRESSED_4"] == 1
       ret.gas = cp.vl["ENGINE_1"]["ACCEL_PEDAL"]
@@ -149,6 +149,7 @@ class CarState(CarStateBase):
     else:
       messages = [
         # sig_address, frequency
+        ("ABS_6", 100),
         ("ESP_1", 50),
         ("EPS_2", 100),
         ("ESP_6", 50),
