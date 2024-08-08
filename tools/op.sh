@@ -25,6 +25,15 @@ function op_install() {
   echo -e " ↳ [${GREEN}✔${NC}] op installed successfully. Open a new shell to use it.\n"
 }
 
+function loge() {
+  if [[ -f "$LOG_FILE" ]]; then
+    # error type
+    echo "$1" >> $LOG_FILE
+    # error log
+    echo "$2" >> $LOG_FILE
+  fi
+}
+
 function op_run_command() {
   CMD="$@"
   echo -e "${BOLD}Running:${NC} $CMD"
@@ -97,11 +106,13 @@ function op_check_os() {
           ;;
         * )
           echo -e " ↳ [${RED}✗${NC}] Incompatible Ubuntu version $VERSION_CODENAME detected!"
+          loge "ERROR_INCOMPATIBLE_UBUNTU" "$VERSION_CODENAME"
           return 1
           ;;
       esac
     else
       echo -e " ↳ [${RED}✗${NC}] No /etc/os-release on your system. Make sure you're running on Ubuntu, or similar!"
+      loge "ERROR_UNKNOWN_UBUNTU"
       return 1
     fi
 
@@ -109,6 +120,7 @@ function op_check_os() {
     echo -e " ↳ [${GREEN}✔${NC}] macos detected.\n"
   else
     echo -e " ↳ [${RED}✗${NC}] OS type $OSTYPE not supported!"
+    loge "ERROR_UNKNOWN_OS" "$OSTYPE"
     return 1
   fi
 }
@@ -120,11 +132,13 @@ function op_check_python() {
 
   if [[ -z $INSTALLED_PYTHON_VERSION ]]; then
     echo -e " ↳ [${RED}✗${NC}] python3 not found on your system. You need python version at least $(echo $REQUIRED_PYTHON_VERSION | tr -d -c '[0-9.]') to continue!"
+    loge "ERROR_PYTHON_NOT_FOUND"
     return 1
   elif [[ $(echo $INSTALLED_PYTHON_VERSION | grep -o '[0-9]\+\.[0-9]\+' | tr -d -c '[0-9]') -ge $(echo $REQUIRED_PYTHON_VERSION | tr -d -c '[0-9]') ]]; then
     echo -e " ↳ [${GREEN}✔${NC}] $INSTALLED_PYTHON_VERSION detected."
   else
     echo -e " ↳ [${RED}✗${NC}] You need python version at least $(echo $REQUIRED_PYTHON_VERSION | tr -d -c '[0-9.]') to continue!"
+    loge "ERROR_PYTHON_VERSION" "$INSTALLED_PYTHON_VERSION"
     return 1
   fi
 }
@@ -173,22 +187,35 @@ function op_setup() {
   echo "Installing dependencies..."
   st="$(date +%s)"
   if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    op_run_command $OPENPILOT_ROOT/tools/ubuntu_setup.sh
+    SETUP_SCRIPT="tools/ubuntu_setup.sh"
   elif [[ "$OSTYPE" == "darwin"* ]]; then
-    op_run_command $OPENPILOT_ROOT/tools/mac_setup.sh
+    SETUP_SCRIPT="tools/mac_setup.sh"
+  fi
+  if ! op_run_command "$OPENPILOT_ROOT/$SETUP_SCRIPT"; then
+    echo -e " ↳ [${RED}✗${NC}] Dependencies installation failed!"
+    loge "ERROR_DEPENDENCIES_INSTALLATION"
+    return 1
   fi
   et="$(date +%s)"
   echo -e " ↳ [${GREEN}✔${NC}] Dependencies installed successfully in $((et - st)) seconds.\n"
 
   echo "Getting git submodules..."
   st="$(date +%s)"
-  op_run_command git submodule update --filter=blob:none --jobs 4 --init --recursive
+  if ! op_run_command git submodule update --filter=blob:none --jobs 4 --init --recursive; then
+    echo -e " ↳ [${RED}✗${NC}] Getting git submodules failed!"
+    loge "ERROR_GIT_SUBMODULES"
+    return 1
+  fi
   et="$(date +%s)"
   echo -e " ↳ [${GREEN}✔${NC}] Submodules installed successfully in $((et - st)) seconds.\n"
 
   echo "Pulling git lfs files..."
   st="$(date +%s)"
-  op_run_command git lfs pull
+  if ! op_run_command git lfs pull; then
+    echo -e " ↳ [${RED}✗${NC}] Pulling git lfs files failed!"
+    loge "ERROR_GIT_LFS"
+    return 1
+  fi
   et="$(date +%s)"
   echo -e " ↳ [${GREEN}✔${NC}] Files pulled successfully in $((et - st)) seconds.\n"
 
@@ -224,7 +251,7 @@ function op_juggle() {
 
 function op_lint() {
   op_before_cmd
-  op_run_command pre-commit run --all $@
+  op_run_command scripts/lint.sh $@
 }
 
 function op_test() {
@@ -272,7 +299,7 @@ function op_default() {
   echo -e "  ${BOLD}juggle${NC}   Run Plotjuggler"
   echo -e "  ${BOLD}replay${NC}   Run replay"
   echo -e "  ${BOLD}cabana${NC}   Run cabana"
-  echo -e "  ${BOLD}lint${NC}     Run all the pre-commit checks"
+  echo -e "  ${BOLD}lint${NC}     Run the linter"
   echo -e "  ${BOLD}test${NC}     Run all unit tests from pytest"
   echo -e "  ${BOLD}help${NC}     Show this message"
   echo -e "  ${BOLD}install${NC}  Install the 'op' tool system wide"
@@ -288,16 +315,15 @@ function op_default() {
   echo "          Show the result of all checks before running a command"
   echo ""
   echo -e "${BOLD}${UNDERLINE}Examples:${NC}"
-  echo "  op --dir /tmp/openpilot check"
-  echo "          Run the check command on openpilot located in /tmp/openpilot"
+  echo "  op setup"
+  echo "          Run the setup script to install"
+  echo "          openpilot's dependencies."
   echo ""
-  echo "  op juggle --install"
-  echo "          Install plotjuggler in the openpilot located in your current"
-  echo "          working directory"
+  echo "  op build -j4"
+  echo "          Compile openpilot using 4 cores"
   echo ""
-  echo "  op --dir /tmp/openpilot build -j4"
-  echo "          Run the build command on openpilot located in /tmp/openpilot"
-  echo "          on 4 cores"
+  echo "  op juggle --demo"
+  echo "          Run PlotJuggler on the demo route"
 }
 
 
@@ -308,6 +334,7 @@ function _op() {
     --dry )            shift 1; DRY="1" ;;
     -n | --no-verify ) shift 1; NO_VERIFY="1" ;;
     -v | --verbose )   shift 1; VERBOSE="1" ;;
+    -l | --log )       shift 1; LOG_FILE="$1" ; shift 1 ;;
   esac
 
   # parse Commands
