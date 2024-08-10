@@ -42,7 +42,7 @@ class CarState(CarStateBase):
       ret.brakePressed = cp.vl["BRAKE_PRESSED_4"]["BRAKE_PRESSED_4"] == 1
       ret.gas = cp.vl["ENGINE_1"]["ACCEL_PEDAL"]
       ret.gasPressed = ret.gas > 1e-3
-      ret.wheelSpeeds = self.get_wheel_speeds( # TODO Adjust scale
+      ret.wheelSpeeds = self.get_wheel_speeds(
         cp.vl["WHEEL_SPEEDS"]["WHEEL_SPEED_FL"],
         cp.vl["WHEEL_SPEEDS"]["WHEEL_SPEED_FR"],
         cp.vl["WHEEL_SPEEDS"]["WHEEL_SPEED_RL"],
@@ -58,6 +58,8 @@ class CarState(CarStateBase):
       ret.steeringPressed = ret.steeringTorque > 80
       ret.yawRate = cp.vl["ABS_2"]["YAW_RATE"]
       ret.steerFaultPermanent = bool(cp.vl["EPS_2"]["LKA_FAULT"])
+      ret.leftBlinker = bool(cp.vl["BCM_1"]["LEFT_TURN_STALK"])
+      ret.rightBlinker = bool(cp.vl["BCM_1"]["RIGHT_TURN_STALK"])
     else:
       self.prev_distance_button = self.distance_button
       self.distance_button = cp.vl["CRUISE_BUTTONS"]["ACC_Distance_Dec"]
@@ -145,7 +147,15 @@ class CarState(CarStateBase):
   @staticmethod
   def get_can_parser(CP):
     if CP.carFingerprint in JEEP_COMMANDER:
-      messages = []
+      messages = [
+        ("ABS_2", 100),
+        ("BCM_1", 4),  # 4Hz plus triggered updates
+        ("BRAKE_PRESSED_4", 100),
+        ("ENGINE_1", 100),
+        ("EPS_1", 100),
+        ("EPS_2", 100),
+        ("WHEEL_SPEEDS", 100),
+      ]
     else:
       messages = [
         # sig_address, frequency
@@ -172,12 +182,7 @@ class CarState(CarStateBase):
       ]
     elif CP.carFingerprint in JEEP_COMMANDER:
       messages += [
-        ("ABS_2", 100),
-        ("BRAKE_PRESSED_4", 100),
-        ("ENGINE_1", 100),
-        ("EPS_1", 100),
-        ("EPS_2", 100),
-        ("WHEEL_SPEEDS", 100),
+        # TODO Gear Detection
       ]
     else:
       messages += [
