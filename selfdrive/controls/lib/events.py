@@ -951,11 +951,11 @@ EVENTS: dict[int, dict[str, Alert | AlertCallbackType]] = {
   },
 
   EventName.steerAlwaysEngageSound: {
-    ET.PERMANENT: EngagementAlert(AudibleAlert.engage),
+    ET.PERMANENT: EngagementAlert(AudibleAlert.engageMads),
   },
 
   EventName.steerAlwaysDisengageSound: {
-    ET.PERMANENT: EngagementAlert(AudibleAlert.disengage),
+    ET.PERMANENT: EngagementAlert(AudibleAlert.disengageMads),
   },
 
   EventName.vehicleSensorsInvalid: {

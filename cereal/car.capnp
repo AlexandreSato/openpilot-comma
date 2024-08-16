@@ -425,8 +425,10 @@ struct CarControl {
       promptDistracted @8;
 
 
-      # AleSato's automatic brakehold
-      engageBrakehold @9;
+      # AleSato's
+      engageBrakehold @9; # automatic brakehold
+      engageMads @10;
+      disengageMads @11;
     }
   }
 

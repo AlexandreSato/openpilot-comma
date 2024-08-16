@@ -13,6 +13,8 @@ Paypall.png filter= diff= merge=
 selfdrive/assets/offroad/brakehold.png filter= diff= merge=
 selfdrive/assets/offroad/bright-brightness-sun-svgrepo-com.svg filter= diff= merge=
 selfdrive/assets/sounds/engage_brakehold.wav filter= diff= merge=
+selfdrive/assets/sounds/engage_mads.wav filter= diff= merge=
+selfdrive/assets/sounds/disengage_mads.wav filter= diff= merge=
 
 selfdrive/car/tests/test_models_segs.txt filter=lfs diff=lfs merge=lfs -text
 system/hardware/tici/updater filter=lfs diff=lfs merge=lfs -text
