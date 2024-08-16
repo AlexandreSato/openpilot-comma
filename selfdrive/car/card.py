@@ -15,6 +15,7 @@ from openpilot.common.swaglog import cloudlog, ForwardingHandler
 from openpilot.selfdrive.pandad import can_capnp_to_list, can_list_to_can_capnp
 from openpilot.selfdrive.car import DT_CTRL, carlog
 from openpilot.selfdrive.car.can_definitions import CanData, CanRecvCallable, CanSendCallable
+from openpilot.selfdrive.car.car_specific import CarSpecificEvents, MockCarState
 from openpilot.selfdrive.car.fw_versions import ObdCallback
 from openpilot.selfdrive.car.car_helpers import get_car
 from openpilot.selfdrive.car.interfaces import CarInterfaceBase
@@ -88,7 +89,13 @@ class Car:
 
       experimental_long_allowed = self.params.get_bool("ExperimentalLongitudinalEnabled")
       num_pandas = len(messaging.recv_one_retry(self.sm.sock['pandaStates']).pandaStates)
-      cached_params = self.params.get("CarParamsCache")
+
+      cached_params = None
+      cached_params_raw = self.params.get("CarParamsCache")
+      if cached_params_raw is not None:
+        with car.CarParams.from_bytes(cached_params_raw) as _cached_params:
+          cached_params = _cached_params
+
       self.CI = get_car(*self.can_callbacks, obd_callback(self.params), experimental_long_allowed, num_pandas, cached_params)
       self.CP = self.CI.CP
 
@@ -129,6 +136,9 @@ class Car:
 
     self.events = Events()
 
+    self.car_events = CarSpecificEvents(self.CP)
+    self.mock_carstate = MockCarState()
+
     # card is driven by can recv, expected at 100Hz
     self.rk = Ratekeeper(100, print_delay_threshold=None)
 
@@ -137,7 +147,10 @@ class Car:
 
     # Update carState from CAN
     can_strs = messaging.drain_sock_raw(self.can_sock, wait_for_one=True)
-    CS = self.CI.update(self.CC_prev, can_capnp_to_list(can_strs))
+    CS = self.CI.update(can_capnp_to_list(can_strs))
+
+    if self.CP.carName == 'mock':
+      CS = self.mock_carstate.update(CS)
 
     self.sm.update(0)
 
@@ -152,10 +165,18 @@ class Car:
 
     return CS
 
-  def update_events(self, CS: car.CarState) -> car.CarState:
+  def update_events(self, CS: car.CarState):
     self.events.clear()
 
+    CS.events = self.car_events.update(self.CI.CS, self.CS_prev, self.CI.CC, self.CC_prev).to_msg()
+
     self.events.add_from_msg(CS.events)
+
+    if self.CP.notCar:
+      # wait for everything to init first
+      if self.sm.frame > int(5. / DT_CTRL) and self.initialized_prev:
+        # body always wants to enable
+        self.events.add(EventName.pcmEnable)
 
     # Disable on rising edge of accelerator or brake. Also disable on brake when speed > 0
     if (CS.gasPressed and not self.CS_prev.gasPressed and self.disengage_on_accelerator) or \
