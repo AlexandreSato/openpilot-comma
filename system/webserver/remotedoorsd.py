@@ -76,10 +76,10 @@ def route(route):
     <br><br>
     <a href="/footage">back to routes</a>
     <br><br>
-    <a href=\""""+route+"""?0,qcamera\">qcamera</a> -
-    <a href=\""""+route+"""?0,fcamera\">fcamera</a> -
-    <a href=\""""+route+"""?0,dcamera\">dcamera</a> -
-    <a href=\""""+route+"""?0,ecamera\">ecamera</a>
+    <a href=\""""+route+"""?"""+query_segment+""",qcamera\">qcamera</a> -
+    <a href=\""""+route+"""?"""+query_segment+""",fcamera\">fcamera</a> -
+    <a href=\""""+route+"""?"""+query_segment+""",dcamera\">dcamera</a> -
+    <a href=\""""+route+"""?"""+query_segment+""",ecamera\">ecamera</a>
     <br><br>
     """+links+"""
   </center>
