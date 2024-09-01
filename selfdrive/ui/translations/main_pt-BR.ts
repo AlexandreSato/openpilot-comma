@@ -1088,8 +1088,16 @@ Ré</translation>
         <translation>Certifique-se de ter vista limpa do céu</translation>
     </message>
     <message>
-        <source>Driving Personality: %1</source>
-        <translation>Temperamento de Direção: %1</translation>
+        <source>Driving Personality: Aggressive</source>
+        <translation>Temperamento de Direção: Disputa</translation>
+    </message>
+    <message>
+        <source>Driving Personality: Relaxed</source>
+        <translation>Temperamento de Direção: Calmo</translation>
+    </message>
+    <message>
+        <source>Driving Personality: Standard</source>
+        <translation>Temperamento de Direção: Neutro</translation>
     </message>
 </context>
 <context>
