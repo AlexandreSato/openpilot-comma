@@ -13,19 +13,26 @@ import time
 from cereal import messaging, log
 from msgq.visionipc import VisionIpcServer, VisionStreamType
 from cereal.messaging import SubMaster, PubMaster
+from openpilot.common.basedir import BASEDIR
 from openpilot.common.params import Params
-from openpilot.common.transformations.camera import DEVICE_CAMERAS
+from openpilot.common.prefix import OpenpilotPrefix
+from openpilot.common.transformations.camera import CameraConfig, DEVICE_CAMERAS
+from openpilot.selfdrive.controls.lib.alertmanager import set_offroad_alert
 from openpilot.selfdrive.test.helpers import with_processes
+from openpilot.selfdrive.test.process_replay.migration import migrate_selfdriveState
 from openpilot.tools.lib.logreader import LogReader
+from openpilot.tools.lib.framereader import FrameReader
+from openpilot.tools.lib.route import Route
 
 UI_DELAY = 0.5 # may be slower on CI?
 TEST_ROUTE = "a2a0ccea32023010|2023-07-27--13-01-19"
 
-CAM = DEVICE_CAMERAS[("tici", "ar0231")]
-DATA: dict[str, capnp.lib.capnp._DynamicStructBuilder | None] = dict.fromkeys(
-  ["deviceState", "pandaStates", "controlsState", "liveCalibration",
-  "modelV2", "radarState", "driverMonitoringState",
-  "carState", "driverStateV2", "roadCameraState", "wideRoadCameraState"], None)
+STREAMS: list[tuple[VisionStreamType, CameraConfig, bytes]] = []
+OFFROAD_ALERTS = ['Offroad_StorageMissing', 'Offroad_IsTakingSnapshot']
+DATA: dict[str, capnp.lib.capnp._DynamicStructBuilder] = dict.fromkeys(
+  ["carParams", "deviceState", "pandaStates", "controlsState", "selfdriveState",
+  "liveCalibration", "modelV2", "radarState", "driverMonitoringState", "carState",
+  "driverStateV2", "roadCameraState", "wideRoadCameraState", "driverCameraState"], None)
 
 def setup_common(click, pm: PubMaster):
   Params().put("DongleId", "123456789012345")
@@ -39,75 +46,110 @@ def setup_settings_device(click, pm: PubMaster):
 
   click(100, 100)
 
-def setup_settings_network(click, pm: PubMaster):
-  setup_common(click, pm)
-
-  setup_settings_device(click, pm)
-  click(300, 600)
-
 def setup_onroad(click, pm: PubMaster):
   setup_common(click, pm)
 
   vipc_server = VisionIpcServer("camerad")
-
-  streams = [(VisionStreamType.VISION_STREAM_ROAD, CAM.fcam),
-             (VisionStreamType.VISION_STREAM_DRIVER, CAM.dcam),
-             (VisionStreamType.VISION_STREAM_WIDE_ROAD, CAM.ecam)]
-  for stream_type, cam in streams:
-    vipc_server.create_buffers(stream_type, 40, False, cam.width, cam.height)
-
+  for stream_type, cam, _ in STREAMS:
+    vipc_server.create_buffers(stream_type, 5, False, cam.width, cam.height)
   vipc_server.start_listener()
 
   packet_id = 0
-  for _ in range(10):
+  for _ in range(20):
     for service, data in DATA.items():
       if data:
         data.clear_write_flag()
         pm.send(service, data)
 
-    for stream_type, cam in streams:
-      IMG = np.zeros((int(cam.width*1.5), cam.height), dtype=np.uint8)
-      IMG_BYTES = IMG.flatten().tobytes()
-      packet_id = packet_id + 1
-      vipc_server.send(stream_type, IMG_BYTES, packet_id, packet_id, packet_id)
+    packet_id = packet_id + 1
+    for stream_type, _, image in STREAMS:
+      vipc_server.send(stream_type, image, packet_id, packet_id, packet_id)
 
     time.sleep(0.05)
+
+def setup_onroad_wide(click, pm: PubMaster):
+  DATA['selfdriveState'].selfdriveState.experimentalMode = True
+  DATA["carState"].carState.vEgo = 1
+  setup_onroad(click, pm)
 
 def setup_onroad_sidebar(click, pm: PubMaster):
   setup_onroad(click, pm)
   click(500, 500)
 
+def setup_onroad_wide_sidebar(click, pm: PubMaster):
+  setup_onroad_wide(click, pm)
+  click(500, 500)
 
-def setup_onroad_alert(click, pm: PubMaster, text1, text2, size, status=log.ControlsState.AlertStatus.normal):
+def setup_body(click, pm: PubMaster):
+  DATA['carParams'].carParams.carName = "BODY"
+  DATA['carParams'].carParams.notCar = True
+  DATA['carState'].carState.charging = True
+  DATA['carState'].carState.fuelGauge = 50.0
+  setup_onroad(click, pm)
+
+def setup_driver_camera(click, pm: PubMaster):
+  setup_settings_device(click, pm)
+  click(1950, 435)
+  DATA['deviceState'].deviceState.started = False
+  setup_onroad(click, pm)
+  DATA['deviceState'].deviceState.started = True
+
+def setup_onroad_alert(click, pm: PubMaster, text1, text2, size, status=log.SelfdriveState.AlertStatus.normal):
   print(f'setup onroad alert, size: {size}')
   setup_onroad(click, pm)
-  dat = messaging.new_message('controlsState')
-  cs = dat.controlsState
+  dat = messaging.new_message('selfdriveState')
+  cs = dat.selfdriveState
   cs.alertText1 = text1
   cs.alertText2 = text2
   cs.alertSize = size
   cs.alertStatus = status
-  cs.alertType = "test_onorad_alert"
-  pm.send('controlsState', dat)
+  cs.alertType = "test_onroad_alert"
+  pm.send('selfdriveState', dat)
 
 def setup_onroad_alert_small(click, pm: PubMaster):
-  setup_onroad_alert(click, pm, 'This is a small alert message', '', log.ControlsState.AlertSize.small)
+  setup_onroad_alert(click, pm, 'This is a small alert message', '', log.SelfdriveState.AlertSize.small)
 
 def setup_onroad_alert_mid(click, pm: PubMaster):
-  setup_onroad_alert(click, pm, 'Medium Alert', 'This is a medium alert message', log.ControlsState.AlertSize.mid)
+  setup_onroad_alert(click, pm, 'Medium Alert', 'This is a medium alert message', log.SelfdriveState.AlertSize.mid)
 
 def setup_onroad_alert_full(click, pm: PubMaster):
-  setup_onroad_alert(click, pm, 'Full Alert', 'This is a full alert message', log.ControlsState.AlertSize.full)
+  setup_onroad_alert(click, pm, 'Full Alert', 'This is a full alert message', log.SelfdriveState.AlertSize.full)
+
+def setup_offorad_alert(click, pm: PubMaster):
+  setup_common(click, pm)
+  for alert in OFFROAD_ALERTS:
+    set_offroad_alert(alert, True)
+
+  # Toggle between settings and home to refresh the offroad alert widget
+  setup_settings_device(click, pm)
+  click(240, 216)
+
+def setup_update_available(click, pm: PubMaster):
+  setup_common(click, pm)
+  Params().put_bool("UpdateAvailable", True)
+  release_notes_path = os.path.join(BASEDIR, "RELEASES.md")
+  with open(release_notes_path) as file:
+    release_notes = file.read().split('\n\n', 1)[0]
+  Params().put("UpdaterNewReleaseNotes", release_notes + "\n")
+
+  setup_settings_device(click, pm)
+  click(240, 216)
+
 
 CASES = {
   "homescreen": setup_homescreen,
   "settings_device": setup_settings_device,
-  "settings_network": setup_settings_network,
   "onroad": setup_onroad,
   "onroad_sidebar": setup_onroad_sidebar,
   "onroad_alert_small": setup_onroad_alert_small,
   "onroad_alert_mid": setup_onroad_alert_mid,
   "onroad_alert_full": setup_onroad_alert_full,
+  "onroad_wide": setup_onroad_wide,
+  "onroad_wide_sidebar": setup_onroad_wide_sidebar,
+  "driver_camera": setup_driver_camera,
+  "body": setup_body,
+  "offroad_alert": setup_offorad_alert,
+  "update_available": setup_update_available
 }
 
 TEST_DIR = pathlib.Path(__file__).parent
@@ -177,17 +219,33 @@ def create_screenshots():
 
   SCREENSHOTS_DIR.mkdir(parents=True)
 
-  lr = list(LogReader(f'{TEST_ROUTE}/1/q'))
-  for event in lr:
+  route = Route(TEST_ROUTE)
+
+  segnum = 2
+  lr = LogReader(route.qlog_paths()[segnum])
+  DATA['carParams'] = next((event.as_builder() for event in lr if event.which() == 'carParams'), None)
+  for event in migrate_selfdriveState(lr):
     if event.which() in DATA:
       DATA[event.which()] = event.as_builder()
 
     if all(DATA.values()):
       break
 
+  cam = DEVICE_CAMERAS[("tici", "ar0231")]
+  road_img = FrameReader(route.camera_paths()[segnum]).get(0, pix_fmt="nv12")[0]
+  STREAMS.append((VisionStreamType.VISION_STREAM_ROAD, cam.fcam, road_img.flatten().tobytes()))
+
+  wide_road_img = FrameReader(route.ecamera_paths()[segnum]).get(0, pix_fmt="nv12")[0]
+  STREAMS.append((VisionStreamType.VISION_STREAM_WIDE_ROAD, cam.ecam, wide_road_img.flatten().tobytes()))
+
+  driver_img = FrameReader(route.dcamera_paths()[segnum]).get(0, pix_fmt="nv12")[0]
+  STREAMS.append((VisionStreamType.VISION_STREAM_DRIVER, cam.dcam, driver_img.flatten().tobytes()))
+
   t = TestUI()
-  for name, setup in CASES.items():
-    t.test_ui(name, setup)
+
+  with OpenpilotPrefix():
+    for name, setup in CASES.items():
+      t.test_ui(name, setup)
 
 if __name__ == "__main__":
   print("creating test screenshots")
