@@ -1087,6 +1087,10 @@ Ré</translation>
         <source>Ensure device has a clear view of the sky</source>
         <translation>Certifique-se de ter vista limpa do céu</translation>
     </message>
+    <message>
+        <source>Driving Personality: %1</source>
+        <translation>Temperamento de Direção: %1</translation>
+    </message>
 </context>
 <context>
     <name>PairingPopup</name>
