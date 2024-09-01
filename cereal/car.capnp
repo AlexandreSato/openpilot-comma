@@ -121,10 +121,10 @@ struct CarEvent @0x9b1657f34caf3ad3 {
 
 
     # AleSato events
-    manualSteeringRequired @122;
-    steerAlwaysEngageSound @123;
-    steerAlwaysDisengageSound @124;
-    automaticBrakehold @125;
+    manualSteeringRequired @123;
+    steerAlwaysEngageSound @124;
+    steerAlwaysDisengageSound @125;
+    automaticBrakehold @126;
 
 
     radarCanErrorDEPRECATED @15;
