@@ -17,7 +17,7 @@ import pyautogui
 
 # For generate a background image
 from msgq.visionipc import VisionIpcServer, VisionStreamType
-from openpilot.common.transformations.camera import CameraConfig, DEVICE_CAMERAS
+from openpilot.common.transformations.camera import DEVICE_CAMERAS
 from openpilot.tools.lib.logreader import LogReader
 from openpilot.tools.lib.framereader import FrameReader
 from openpilot.tools.lib.route import Route
@@ -30,7 +30,7 @@ CS = car.CarState.new_message()
 sm = messaging.SubMaster(list(SERVICE_LIST.keys()))
 pm = messaging.PubMaster(list(SERVICE_LIST.keys()))
 
-EventName = car.CarEvent.EventName
+EventName = car.OnroadEvent.EventName
 specific_alerts = [
   # Include here your events to test
   (EventName.calibrationInvalid, ET.PERMANENT),
@@ -38,21 +38,34 @@ specific_alerts = [
   (EventName.promptDriverDistracted, ET.PERMANENT),
   # (EventName.stockAeb, ET.NO_ENTRY),
   # (EventName.fcw, ET.PERMANENT),
-  (EventName.personalityChanged, ET.WARNING), # this guy needs to be tested separately (und uncoment in range(3))
+  # (EventName.personalityChanged, ET.WARNING), # this guy needs to be tested separately (und uncoment in range(3))
+
+  # this plays each type of audible alert
+  (EventName.buttonEnable, ET.ENABLE),
+  (EventName.buttonCancel, ET.USER_DISABLE),
+  (EventName.wrongGear, ET.NO_ENTRY),
+
+  (EventName.locationdTemporaryError, ET.SOFT_DISABLE),
+  (EventName.paramsdTemporaryError, ET.SOFT_DISABLE),
+  (EventName.accFaulted, ET.IMMEDIATE_DISABLE),
+
+  # DM sequence
+  (EventName.preDriverDistracted, ET.WARNING),
+  (EventName.promptDriverDistracted, ET.WARNING),
+  (EventName.driverDistracted, ET.WARNING),
 ]
 duration = 200
 is_metric = True
 
 
 def setup_onroad() -> None:
-  segnum = 2
+  segnum = 7
   route = Route(TEST_ROUTE)
   lr = LogReader(route.qlog_paths()[segnum])
   DATA['carParams'] = next((event.as_builder() for event in lr if event.which() == 'carParams'), None)
   for event in migrate_selfdriveState(lr):
     if event.which() in DATA:
       DATA[event.which()] = event.as_builder()
-
     if all(DATA.values()):
       break
   cam = DEVICE_CAMERAS[("tici", "ar0231")]
@@ -68,11 +81,9 @@ def setup_onroad() -> None:
       if data:
         data.clear_write_flag()
         pm.send(service, data)
-
     packet_id = packet_id + 1
     for stream_type, _, image in STREAMS:
       vipc_server.send(stream_type, image, packet_id, packet_id, packet_id)
-
     time.sleep(0.05)
 
 def click(x, y) -> None:
@@ -142,10 +153,12 @@ def cycle_onroad_alerts():
 
 if __name__ == '__main__':
   managed_processes['ui'].start()
-  setup_onroad()
+  managed_processes['soundd'].start()
+  setup_onroad() # Beautiful and busy
   try:
     while True:
       cycle_onroad_alerts()
       # create_all_onroad_alerts()
   except KeyboardInterrupt:
     managed_processes['ui'].stop()
+    managed_processes['soundd'].stop()
