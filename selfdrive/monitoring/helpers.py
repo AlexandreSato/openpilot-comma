@@ -11,8 +11,10 @@ from openpilot.common.transformations.camera import DEVICE_CAMERAS
 from openpilot.common.params import Params
 
 
-EventName = car.CarEvent.EventName
+EventName = car.OnroadEvent.EventName
+
 mem_params = Params("/dev/shm/params")
+
 # ******************************************************************************************
 #  NOTE: To fork maintainers.
 #  Disabling or nerfing safety features will get you and your users banned from our servers.
