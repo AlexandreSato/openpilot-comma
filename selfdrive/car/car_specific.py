@@ -170,8 +170,8 @@ class CarSpecificEvents:
     elif self.CP.carName == 'gwm':
       events = self.create_common_events(CS.out, CS_prev)
       # BEGIN TODO clean-after-port
-      if CS.out.brakePressed:
-        events.add(EventName.reverseGear)
+      # if CS.out.brakePressed:
+      #   events.add(EventName.reverseGear)
       # END TODO clean-after-port
 
     else:
