@@ -168,7 +168,7 @@ class CarSpecificEvents:
         events.add(EventName.belowSteerSpeed)
 
     elif self.CP.carName == 'gwm':
-      events = self.create_common_events(CS.out, CS_prev)
+      events = self.create_common_events(CS.out, CS_prev, enable_buttons=(ButtonType.setCruise, ButtonType.resumeCruise))
       # BEGIN TODO clean-after-port
       # if CS.out.brakePressed:
       #   events.add(EventName.reverseGear)
