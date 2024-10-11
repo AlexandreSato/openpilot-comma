@@ -207,6 +207,9 @@ def main() -> None:
   if params.get_bool("DoUninstall"):
     cloudlog.warning("uninstalling")
     HARDWARE.uninstall()
+  elif params.get_bool("DumpSecOC"):
+    cloudlog.warning("DumpSecOC")
+    HARDWARE.dumpsecoc()
   elif params.get_bool("DoReboot"):
     cloudlog.warning("reboot")
     HARDWARE.reboot()

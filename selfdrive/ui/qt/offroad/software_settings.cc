@@ -83,6 +83,15 @@ SoftwarePanel::SoftwarePanel(QWidget* parent) : ListWidget(parent) {
   });
   addItem(uninstallBtn);
 
+  // dump SecOC key button
+  auto dumpSecOCBtn = new ButtonControl("Dump SecOCkey", "SecOCkey");
+  connect(dumpSecOCBtn, &ButtonControl::clicked, [&]() {
+    if (ConfirmationDialog::confirm("Are you sure you want to Dump the SecOCkey?", "Dump SecOCkey", this)) {
+      params.putBool("DumpSecOC", true);
+    }
+  });
+  addItem(dumpSecOCBtn);
+
   fs_watch = new ParamWatcher(this);
   QObject::connect(fs_watch, &ParamWatcher::paramChanged, [=](const QString &param_name, const QString &param_value) {
     updateLabels();

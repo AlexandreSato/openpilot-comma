@@ -34,6 +34,10 @@ class HardwareBase(ABC):
     pass
 
   @abstractmethod
+  def dumpsecoc(self):
+    pass
+
+  @abstractmethod
   def get_os_version(self):
     pass
 

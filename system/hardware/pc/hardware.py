@@ -7,6 +7,9 @@ NetworkType = log.DeviceState.NetworkType
 NetworkStrength = log.DeviceState.NetworkStrength
 
 
+from openpilot.common.basedir import BASEDIR
+import os
+
 class Pc(HardwareBase):
   def get_os_version(self):
     return None
@@ -22,6 +25,9 @@ class Pc(HardwareBase):
 
   def uninstall(self):
     print("uninstall")
+
+  def dumpsecoc(self):
+    os.system(os.path.join(BASEDIR, "hello_text_window.py"))
 
   def get_imei(self, slot):
     return "%015d" % random.randint(0, 1 << 32)
