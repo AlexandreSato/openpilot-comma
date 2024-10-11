@@ -4,6 +4,8 @@ import subprocess
 from openpilot.common.basedir import BASEDIR
 import os
 from openpilot.system.manager.process_config import managed_processes
+from openpilot.common.swaglog import cloudlog
+
 
 if __name__ == '__main__':
   managed_processes['pandad'].stop()
@@ -12,6 +14,7 @@ if __name__ == '__main__':
   text += "\n"
   text += out
   print(f'debug: {out}')
+  cloudlog.warning("Foooooo")
   with TextWindow(text) as t:
     t.wait_for_exit()
     managed_processes['pandad'].start()

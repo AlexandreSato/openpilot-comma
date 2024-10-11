@@ -15,12 +15,6 @@ from openpilot.system.hardware.tici import iwlist
 from openpilot.system.hardware.tici.pins import GPIO
 from openpilot.system.hardware.tici.amplifier import Amplifier
 
-
-
-from openpilot.common.basedir import BASEDIR
-
-
-
 NM = 'org.freedesktop.NetworkManager'
 NM_CON_ACT = NM + '.Connection.Active'
 NM_DEV = NM + '.Device'
@@ -142,9 +136,6 @@ class Tici(HardwareBase):
     Path("/data/__system_reset__").touch()
     os.sync()
     self.reboot()
-
-  def dumpsecoc(self):
-    os.system(os.path.join(BASEDIR, "hello_text_window.py"))
 
   def get_serial(self):
     return self.get_cmdline()['androidboot.serialno']

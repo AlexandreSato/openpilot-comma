@@ -18,7 +18,7 @@ from openpilot.system.athena.registration import register, UNREGISTERED_DONGLE_I
 from openpilot.common.swaglog import cloudlog, add_file_handler
 from openpilot.system.version import get_build_metadata, terms_version, training_version
 
-
+import subprocess
 
 def manager_init() -> None:
   save_bootlog()
@@ -175,6 +175,12 @@ def manager_thread() -> None:
     msg.managerState.processes = [p.get_process_state_msg() for p in managed_processes.values()]
     pm.send('managerState', msg)
 
+
+    if params.get_bool('DumpSecOC'):
+      cloudlog.warning("foo")
+      # subprocess.check_output("/data/openpilot/common/text_window.py")
+      subprocess.check_output("/data/openpilot/hello_text_window.py")
+
     # Exit main loop when uninstall/shutdown/reboot is needed
     shutdown = False
     for param in ("DoUninstall", "DoShutdown", "DoReboot"):
@@ -207,9 +213,6 @@ def main() -> None:
   if params.get_bool("DoUninstall"):
     cloudlog.warning("uninstalling")
     HARDWARE.uninstall()
-  elif params.get_bool("DumpSecOC"):
-    cloudlog.warning("DumpSecOC")
-    HARDWARE.dumpsecoc()
   elif params.get_bool("DoReboot"):
     cloudlog.warning("reboot")
     HARDWARE.reboot()
