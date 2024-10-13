@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 print('https://icanhack.nl/\n')
 
-# https://github.com/I-CAN-hack/secoc/blob/while-loop/extract_keys.py
+# https://github.com/I-CAN-hack/secoc/blob/main/extract_keys.py
 import struct
 import time
 import binascii
@@ -30,8 +30,9 @@ DID_202_IV = b'\x00' * 16
 
 # Confirmed working on the following versions
 APPLICATION_VERSIONS = {
-    b'\x018965B4209000\x00\x00\x00\x00': b'\x01!!!!!!!!!!!!!!!!', # Rav4 Prime
-    b'\x018965B4509100\x00\x00\x00\x00': b'\x01!!!!!!!!!!!!!!!!', # Sienna
+    b'\x018965B4209000\x00\x00\x00\x00': b'\x01!!!!!!!!!!!!!!!!', # 2021 RAV4 Prime
+    b'\x018965B4233100\x00\x00\x00\x00': b'\x01!!!!!!!!!!!!!!!!', # 2023 RAV4 Prime
+    b'\x018965B4509100\x00\x00\x00\x00': b'\x01!!!!!!!!!!!!!!!!', # 2021 Sienna
 }
 
 KEY_STRUCT_SIZE = 0x20
@@ -183,16 +184,16 @@ if __name__ == "__main__":
     erase = b"\x31\x01\xff\x00" + data
     panda.isotp_send(ADDR, erase, bus=BUS)
 
-    print("\nDumping dataflash...")
-    start = 0xff200000
-    end = 0xff208000
+    print("\nDumping keys...")
+    start = 0xfebe6e34
+    end = 0xfebe6ff4
 
     extracted = b""
 
     with open(f'data_{start:08x}_{end:08x}.bin', 'wb') as f:
         with tqdm(total=end-start) as pbar:
             while start < end:
-                for addr, _, data, bus in panda.can_recv():
+                for addr, data, bus in panda.can_recv():
                     if bus != BUS:
                         continue
 
@@ -214,3 +215,24 @@ if __name__ == "__main__":
 
                     start += 4
                     pbar.update(4)
+
+    key_1_ok = verify_checksum(get_key_struct(extracted, 1))
+    key_4_ok = verify_checksum(get_key_struct(extracted, 4))
+
+    if not key_1_ok or not key_4_ok:
+        print("SecOC key checksum verification failed!")
+        exit(1)
+
+    key_1 = get_secoc_key(get_key_struct(extracted, 1))
+    key_4 = get_secoc_key(get_key_struct(extracted, 4))
+
+    print("\nECU_MASTER_KEY   ", key_1.hex())
+    print("SecOC Key (KEY_4)", key_4.hex())
+
+    try:
+        from openpilot.common.params import Params
+        params = Params()
+        params.put("SecOCKey", key_4.hex())
+        print("\nSecOC key written to param successfully!")
+    except Exception:
+        print("\nFailed to write SecOCKey param")
