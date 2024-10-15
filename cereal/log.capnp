@@ -80,7 +80,6 @@ struct OnroadEvent @0xc4fa6047f024e718 {
     commIssueAvgFreq @44;
     tooDistracted @45;
     posenetInvalid @46;
-    soundsUnavailable @47;
     preLaneChangeLeft @48;
     preLaneChangeRight @49;
     laneChange @50;
@@ -133,6 +132,9 @@ struct OnroadEvent @0xc4fa6047f024e718 {
     steerAlwaysEngageSound @94;
     steerAlwaysDisengageSound @95;
     automaticBrakehold @96;
+
+
+    soundsUnavailableDEPRECATED @47;
   }
 }
 
