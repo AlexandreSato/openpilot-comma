@@ -8,6 +8,7 @@ export VECLIB_MAXIMUM_THREADS=1
 
 if [ -z "$AGNOS_VERSION" ]; then
   export AGNOS_VERSION="11"
+  pip install flask # uv sucks installing flask
 fi
 
 export STAGING_ROOT="/data/safe_staging"
