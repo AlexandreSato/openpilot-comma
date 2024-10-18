@@ -18,7 +18,7 @@ def format_car_params(CP):
   return pprint.pformat({k: v for k, v in CP.to_dict().items() if not k.endswith('DEPRECATED')}, indent=2)
 
 
-def report(platform, route, _description, CP, maneuvers):
+def report(platform, route, _description, CP, ID, maneuvers):
   output_path = Path(__file__).resolve().parent / "longitudinal_reports"
   output_fn = output_path / f"{platform}_{route.replace('/', '_')}.html"
   output_path.mkdir(exist_ok=True)
@@ -28,7 +28,8 @@ def report(platform, route, _description, CP, maneuvers):
     "<style>summary { cursor: pointer; }\n td, th { padding: 8px; } </style>\n",
     "<h1>Longitudinal maneuver report</h1>\n",
     f"<h3>{platform}</h3>\n",
-    f"<h3>{route}</h3>\n"
+    f"<h3>{route}</h3>\n",
+    f"<h3>{ID.gitCommit}, {ID.gitBranch}, {ID.gitRemote}</h3>\n",
   ]
   if _description is not None:
     builder.append(f"<h3>Description: {_description}</h3>\n")
@@ -64,7 +65,7 @@ def report(platform, route, _description, CP, maneuvers):
       # get first acceleration target and first intersection
       aTarget = longitudinalPlan[0].aTarget
       target_cross_time = None
-      builder.append(f'<h3 style="font-weight: normal">Initial aTarget: {aTarget} m/s^2')
+      builder.append(f'<h3 style="font-weight: normal">Initial aTarget: {round(aTarget, 2)} m/s^2')
 
       # Localizer is noisy, require two consecutive 20Hz frames above threshold
       prev_crossed = False
@@ -119,9 +120,9 @@ def report(platform, route, _description, CP, maneuvers):
       fig.tight_layout()
 
       buffer = io.BytesIO()
-      fig.savefig(buffer, format='png')
+      fig.savefig(buffer, format='webp')
       buffer.seek(0)
-      builder.append(f"<img src='data:image/png;base64,{base64.b64encode(buffer.getvalue()).decode()}' style='width:100%; max-width:800px;'>\n")
+      builder.append(f"<img src='data:image/webp;base64,{base64.b64encode(buffer.getvalue()).decode()}' style='width:100%; max-width:800px;'>\n")
       builder.append("</details>\n")
 
   summary = ["<h2>Summary</h2>\n"]
@@ -158,6 +159,7 @@ if __name__ == '__main__':
     lr = LogReader([os.path.join(Paths.log_root(), seg, 'rlog') for seg in segs])
 
   CP = lr.first('carParams')
+  ID = lr.first('initData')
   platform = CP.carFingerprint
   print('processing report for', platform)
 
@@ -179,4 +181,4 @@ if __name__ == '__main__':
     if active_prev:
       maneuvers[-1][1][-1].append(msg)
 
-  report(platform, args.route, args.description, CP, maneuvers)
+  report(platform, args.route, args.description, CP, ID, maneuvers)
