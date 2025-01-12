@@ -30,7 +30,7 @@ if __name__ == '__main__':
         elif event.type == 3 and event.code == 57 and event.value == -1:
           fingers[current_slot] = [-1, -1]
         elif event.type == 3 and event.code == 53:
-          fingers[current_slot][1] = h - (h - event.value)
+          fingers[current_slot][1] = event.value
           if fingers[current_slot][0] != -1:
             touch_points.append(fingers[current_slot].copy())
         elif event.type == 3 and event.code == 54:
@@ -38,11 +38,17 @@ if __name__ == '__main__':
           if fingers[current_slot][1] != -1:
             touch_points.append(fingers[current_slot].copy())
 
+  if not touch_points:
+    print(f'No touch events found for {route}')
+    quit()
+
   unique_points, counts = np.unique(touch_points, axis=0, return_counts=True)
 
   plt.figure(figsize=(10, 3))
   plt.scatter(unique_points[:, 0], unique_points[:, 1], c=counts, s=counts * 20, edgecolors='red')
   plt.colorbar()
   plt.title(f'Touches for {route}')
+  plt.xlim(0, w)
+  plt.ylim(0, h)
   plt.grid(True)
   plt.show()
